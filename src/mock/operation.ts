@@ -30,6 +30,61 @@ export default [
     }
   },
   {
+    url: '/api/operation/recommend-templates',
+    method: 'get',
+    response: () => {
+      return {
+        code: 200,
+        data: {
+          daily: { subjects: [1, 2], duration: 45, reviewRatio: 40, description: '根据画像，今日重点攻克诊断学。' },
+          weekly: { 
+            subjects: [1, 3], 
+            duration: 300, 
+            description: '本周进入深度学习阶段。',
+            days: [
+              { day: '周一', strategy: '新课开启' },
+              { day: '周二', strategy: '深度钻研' },
+              { day: '周三', strategy: '难点攻克' },
+              { day: '周四', strategy: '中期回顾' },
+              { day: '周五', strategy: '扩展阅读' },
+              { day: '周六', strategy: '专题自测' },
+              { day: '周日', strategy: '周总结与休息' }
+            ]
+          },
+          monthly: { 
+            subjects: [1, 2, 3, 4], 
+            duration: 1200, 
+            description: '月度计划：从基础到模拟。',
+            early: '基础知识构建',
+            mid: '考点专项强化',
+            late: '全真模拟与查漏补缺'
+          }
+        }
+      }
+    }
+  },
+  {
+    url: '/api/operation/recommend-templates/save',
+    method: 'post',
+    response: () => {
+      return { code: 200, message: '模板保存成功' }
+    }
+  },
+  {
+    url: '/api/operation/recommend-preview',
+    method: 'post',
+    response: () => {
+      return {
+        code: 200,
+        data: [
+          { type: 'ebbinghaus', title: '《中医诊断学》舌诊复习', reason: '符合艾宾浩斯第 3 天复习周期' },
+          { type: 'weakness', title: '气血津液辨证专项练习', reason: '上周测评正确率低于 60%' },
+          { type: 'exploration', title: '中医内科学导论', reason: '基于月度初期建议：开启新科目' }
+        ]
+      }
+    }
+  },
+  {
     url: '/api/operation/message/templates',
     method: 'get',
     response: () => {

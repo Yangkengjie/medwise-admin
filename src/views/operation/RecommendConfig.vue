@@ -55,6 +55,116 @@
       </div>
     </el-card>
 
+    <!-- Learning Suggestion Template Card -->
+    <el-card class="config-card mb-20">
+      <template #header>
+        <div class="card-header">
+          <div class="header-title">
+            <el-icon><Calendar /></el-icon>
+            <span>每日学习建议模板配置</span>
+          </div>
+        </div>
+      </template>
+
+      <el-tabs v-model="activeTemplateTab" type="border-card">
+        <!-- Single Day Template -->
+        <el-tab-pane label="单日学习模板" name="daily">
+          <el-form :model="templateForm.daily" label-width="120px" class="template-form">
+            <el-form-item label="建议科目">
+              <el-select v-model="templateForm.daily.subjects" multiple placeholder="选择建议学习的课程" style="width: 100%">
+                <el-option v-for="c in courseOptions" :key="c.id" :label="c.label" :value="c.id" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="建议时长">
+              <el-input-number v-model="templateForm.daily.duration" :min="1" />
+              <span class="ml-10">分钟</span>
+            </el-form-item>
+            <el-form-item label="内容比例">
+              <div class="ratio-slider">
+                <span class="label">新学 {{ 100 - templateForm.daily.reviewRatio }}%</span>
+                <el-slider v-model="templateForm.daily.reviewRatio" :min="0" :max="100" class="slider" />
+                <span class="label">复习 {{ templateForm.daily.reviewRatio }}%</span>
+              </div>
+            </el-form-item>
+            <el-form-item label="建议内容描述">
+              <el-input type="textarea" v-model="templateForm.daily.description" :rows="3" placeholder="例如：今日建议复习气血辨证章节" />
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+
+        <!-- Weekly Template -->
+        <el-tab-pane label="每周学习模板" name="weekly">
+          <el-form :model="templateForm.weekly" label-width="120px" class="template-form">
+            <el-form-item label="建议科目">
+              <el-select v-model="templateForm.weekly.subjects" multiple placeholder="默认建议科目" style="width: 100%">
+                <el-option v-for="c in courseOptions" :key="c.id" :label="c.label" :value="c.id" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="建议时长">
+              <el-input-number v-model="templateForm.weekly.duration" :min="1" />
+              <span class="ml-10">分钟</span>
+            </el-form-item>
+            
+            <div class="weekly-strategies">
+              <div class="strategy-header">每日策略分配</div>
+              <el-table :data="templateForm.weekly.days" border size="small">
+                <el-table-column prop="day" label="星期" width="100" align="center" />
+                <el-table-column label="建议策略">
+                  <template #default="{ row }">
+                    <el-input v-model="row.strategy" size="small" placeholder="请输入该日的学习策略" />
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+
+            <el-form-item label="建议内容描述" class="mt-20">
+              <el-input type="textarea" v-model="templateForm.weekly.description" :rows="2" />
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+
+        <!-- Monthly Template -->
+        <el-tab-pane label="每月学习模板" name="monthly">
+          <el-form :model="templateForm.monthly" label-width="120px" class="template-form">
+            <el-form-item label="建议科目">
+              <el-select v-model="templateForm.monthly.subjects" multiple placeholder="全月核心科目" style="width: 100%">
+                <el-option v-for="c in courseOptions" :key="c.id" :label="c.label" :value="c.id" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="建议时长">
+              <el-input-number v-model="templateForm.monthly.duration" :min="1" />
+              <span class="ml-10">分钟</span>
+            </el-form-item>
+
+            <div class="monthly-phases">
+              <div class="phase-item">
+                <div class="phase-label">月初侧重点 (1-10日)</div>
+                <el-input v-model="templateForm.monthly.early" placeholder="如：新内容学习" />
+              </div>
+              <div class="phase-item">
+                <div class="phase-label">月中侧重点 (11-20日)</div>
+                <el-input v-model="templateForm.monthly.mid" placeholder="如：知识点串联" />
+              </div>
+              <div class="phase-item">
+                <div class="phase-label">月末侧重点 (21-31日)</div>
+                <el-input v-model="templateForm.monthly.late" placeholder="如：总复习与自测" />
+              </div>
+            </div>
+
+            <el-form-item label="建议内容描述" class="mt-20">
+              <el-input type="textarea" v-model="templateForm.monthly.description" :rows="2" />
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+      </el-tabs>
+
+      <div class="config-footer">
+        <el-button type="success" size="large" icon="Check" @click="handleSaveTemplates">
+          保存模板配置
+        </el-button>
+      </div>
+    </el-card>
+
     <!-- Preview Area -->
     <el-card class="preview-card">
       <template #header>
@@ -111,8 +221,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Operation, View, Calendar, MagicStick, Check, RefreshLeft, CircleCheck } from '@element-plus/icons-vue'
 import axios from 'axios'
 
 interface Strategy {
@@ -128,10 +239,49 @@ interface PreviewItem {
   reason: string
 }
 
+interface CourseOption {
+  id: number
+  label: string
+}
+
 const strategies = ref<Strategy[]>([])
 const previewUserId = ref('')
 const previewLoading = ref(false)
 const previewList = ref<PreviewItem[]>([])
+
+const activeTemplateTab = ref('daily')
+const courseOptions = ref<CourseOption[]>([])
+
+const templateForm = reactive({
+  daily: {
+    subjects: [],
+    duration: 30,
+    reviewRatio: 50,
+    description: ''
+  },
+  weekly: {
+    subjects: [],
+    duration: 200,
+    description: '',
+    days: [
+      { day: '周一', strategy: '新课开启' },
+      { day: '周二', strategy: '深度钻研' },
+      { day: '周三', strategy: '难点攻克' },
+      { day: '周四', strategy: '中期回顾' },
+      { day: '周五', strategy: '扩展阅读' },
+      { day: '周六', strategy: '专题自测' },
+      { day: '周日', strategy: '周总结与休息' }
+    ]
+  },
+  monthly: {
+    subjects: [],
+    duration: 1000,
+    description: '',
+    early: '基础知识构建',
+    mid: '考点专项强化',
+    late: '全真模拟与查漏补缺'
+  }
+})
 
 const totalWeight = computed(() => {
   return strategies.value
@@ -171,15 +321,23 @@ const getTypeTag = (type: string) => {
 
 const fetchConfig = async () => {
   try {
-    const res = await axios.get('/api/operation/recommend-config')
-    strategies.value = res.data.data.strategies
+    const [configRes, coursesRes, templatesRes] = await Promise.all([
+      axios.get('/api/operation/recommend-config'),
+      axios.get('/api/courses/tree'),
+      axios.get('/api/operation/recommend-templates')
+    ])
+    strategies.value = configRes.data.data.strategies
+    courseOptions.value = coursesRes.data.data.map((c: any) => ({ id: c.id, label: c.label }))
+    if (templatesRes.data.data) {
+      Object.assign(templateForm, templatesRes.data.data)
+    }
   } catch (error) {
     console.error('Failed to fetch config:', error)
   }
 }
 
 const handleWeightChange = () => {
-  // Logic could be added here to auto-balance, but user requested manual configuration with validation
+  // Logic could be added here to auto-balance
 }
 
 const handleSave = async () => {
@@ -195,6 +353,15 @@ const handleSave = async () => {
   }
 }
 
+const handleSaveTemplates = async () => {
+  try {
+    await axios.post('/api/operation/recommend-templates/save', templateForm)
+    ElMessage.success('每日学习建议模板已保存，将结合用户画像生成个性化建议')
+  } catch (error) {
+    ElMessage.error('保存模板失败')
+  }
+}
+
 const handlePreview = async () => {
   if (!previewUserId.value) {
     ElMessage.warning('请输入用户 ID')
@@ -204,7 +371,8 @@ const handlePreview = async () => {
   try {
     const res = await axios.post('/api/operation/recommend-preview', {
       userId: previewUserId.value,
-      strategies: strategies.value
+      strategies: strategies.value,
+      templates: templateForm
     })
     previewList.value = res.data.data
   } catch (error) {
@@ -356,5 +524,42 @@ onMounted(fetchConfig)
       color: #64748b;
     }
   }
+
+  .template-form {
+    padding: 10px;
+    .ratio-slider {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      width: 100%;
+      .slider { flex: 1; }
+      .label { font-size: 12px; color: #64748b; min-width: 60px; }
+    }
+  }
+
+  .weekly-strategies {
+    margin: 10px 0 20px 120px;
+    .strategy-header {
+      font-size: 14px;
+      font-weight: bold;
+      color: #475569;
+      margin-bottom: 12px;
+    }
+  }
+
+  .monthly-phases {
+    margin: 10px 0 20px 120px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    .phase-label {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+  }
+
+  .ml-10 { margin-left: 10px; }
+  .mt-20 { margin-top: 20px; }
 }
 </style>
