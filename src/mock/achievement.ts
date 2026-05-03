@@ -5,14 +5,35 @@ export default [
     url: '/api/achievement/progress-rules',
     method: 'get',
     response: () => {
-      return { code: 200, data: { videoPercent: 80, outlineSeconds: 30, reviewActive: true, masteryRequired: true } }
+      return {
+        code: 200,
+        data: {
+          courseRules: [
+            { id: 1, name: '中医基础理论', learningThreshold: 30, reviewComplete: true, masteryComplete: true },
+            { id: 2, name: '中医诊断学', learningThreshold: 30, reviewComplete: true, masteryComplete: true },
+            { id: 3, name: '中药学', learningThreshold: 45, reviewComplete: true, masteryComplete: false },
+            { id: 4, name: '方剂学', learningThreshold: 60, reviewComplete: false, masteryComplete: true },
+            { id: 5, name: '中医内科学', learningThreshold: 30, reviewComplete: true, masteryComplete: true }
+          ],
+          displayConfig: {
+            levels: [
+              { id: 'subject', label: '单个科目', enabled: true },
+              { id: 'tcm', label: '中医总体', enabled: true },
+              { id: 'wm', label: '西医总体', enabled: false },
+              { id: 'overall', label: '总体', enabled: true }
+            ],
+            fields: ['learning', 'review'],
+            mergeMode: 'independent'
+          }
+        }
+      }
     }
   },
   {
     url: '/api/achievement/progress-rules/save',
     method: 'post',
     response: () => {
-      return { code: 200, message: '配置保存成功，已实时生效' }
+      return { code: 200, message: '进度规则配置已保存，全量用户实时生效' }
     }
   },
   {
