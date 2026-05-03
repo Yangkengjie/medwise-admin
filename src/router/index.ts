@@ -95,6 +95,7 @@ const routes: Array<RouteRecordRaw> = [
         meta: { title: '系统管理中心', icon: 'Setting' },
         children: [
           { path: 'account', name: 'AccountPerm', component: () => import('@/views/system/AccountPermissions.vue'), meta: { title: '账号权限' } },
+          { path: 'app-perm', name: 'AppPerm', component: () => import('@/views/system/AppPermissions.vue'), meta: { title: '应用权限配置' } },
           { path: 'config', name: 'SystemConfig', component: () => import('@/views/system/SystemConfig.vue'), meta: { title: '系统配置' } },
           { path: 'audit', name: 'LogAudit', component: () => import('@/views/system/Logs.vue'), meta: { title: '日志审计' } },
         ]
